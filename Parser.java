@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -9,26 +10,23 @@ import javax.swing.JFileChooser;
 import Utils.FileUtils;
 
 public class Parser{
-    public static final class Constants{
-        public static final String SEARCH_REGEX = "\"\"\"d[\\.\\w\\s:-]+\"\"\"\\n\\s*((class)|(def)) \\w+";
-        public static final String COMMENTFIND_REGEX = "(?<=\"\"\"d\\n)[\\.\\w\\s-:]+(?=\\n\\s\"\"\"\\n)";
-        public static final String FUNCTIONFIND_REGEX = "(?<=def )[\\w-]+(?=\\([\\s\\S]*\\):)";
-        public static final String CLASSFIND_REGEX = "(?<=class )[\\w-]+(?=[:(])";
-        public static final String PARAMFIND_REGEX = "(?<=:param )[^\\n]+";
-        public static final String RETURNFIND_REGEX = "(?<=:return )[^\\n]+";
-        public static final String TYPEFIND_REGEX = "(?<= :- )[^\\n]+";
-    }
+    public static final String SEARCH_REGEX = "\"\"\"d[\\.\\w\\s;:-]+\"\"\"\\n\\s*((class)|(def)) [\\w+\\s(),]+:";
 
     public static void main(String[] args) {
         String content = loadFile();
-        Matcher matcher = Pattern.compile(Constants.SEARCH_REGEX).matcher(content);
+        Matcher matcher = Pattern.compile(SEARCH_REGEX).matcher(content);
 
-        StringBuilder outBuilder = new StringBuilder();
+        ArrayList<PyDocComment> comments = new ArrayList<>();
         while (matcher.find()){
-            outBuilder.append(content.subSequence(matcher.start(), matcher.end()) + "\n\n");
+            comments.add(new PyDocComment((String)content.subSequence(matcher.start(), matcher.end())));
         }
 
-        FileUtils.dumpString(outBuilder.toString(), "parseResults.txt");
+        StringBuilder debug = new StringBuilder();
+        for (PyDocComment doc : comments){
+            debug.append(doc.toString() + "\n\n");
+        }
+
+        FileUtils.dumpString(debug.toString(), "parse.txt");
     }
 
     private static String loadFile(){
