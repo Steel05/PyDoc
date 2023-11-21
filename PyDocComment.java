@@ -4,13 +4,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PyDocComment {
-    //public static final String COMMENTFIND_REGEX = "(?<=\"\"\"d\\n)[\\.\\w\\s;:-]+";
     public static final String FUNCTIONFIND_REGEX = "(?<=def )[\\w-]+(?=\\([\\s\\S]*\\):)";
     public static final String CLASSFIND_REGEX = "(?<=class )[\\w-]+(?=[:(])";
     public static final String PARAMFIND_REGEX = "(?<=:param )[^\\n]+";
     public static final String RETURNFIND_REGEX = "(?<=:return )[^\\n]+";
     public static final String TYPEFIND_REGEX = "(?<= :- )[^\\n]+";
     public static final String DESCRIPTIONFIND_REGEX = "(?<=\"\"\"d\\n)[\\.\\w\\s;-]+(?=\\n\\s*:?)";
+    public static final String OPERATORFIND_REGEX = "(?<=ops :- )[^\\n]+";
 
     private final String rawComment;
     private final String description;
@@ -21,6 +21,10 @@ public class PyDocComment {
     private final String returnType;
     private final String name;
     private final boolean isClass;
+    private final String supportedOperators;
+
+    private boolean containedInClass = false;
+    private String parentClassName = "None";
 
     public PyDocComment(String comment){
         rawComment = comment;
@@ -36,6 +40,7 @@ public class PyDocComment {
             returnType = "";
             name = "";
             isClass = false;
+            supportedOperators = "";
             return;
         }
 
@@ -50,12 +55,25 @@ public class PyDocComment {
             parameters = new String[0];
             paramDescriptions = null;
             paramTypes = null;
+
+            Matcher opMatcher = Pattern.compile(OPERATORFIND_REGEX).matcher(comment);
+            if(!opMatcher.find()){
+                supportedOperators = "";
+                return;
+            }
+            supportedOperators = comment.substring(opMatcher.start(), opMatcher.end());
+
             return;
         }
-    
+        
+        supportedOperators = "";
         Matcher functionMatcher = Pattern.compile(FUNCTIONFIND_REGEX).matcher(comment);
         functionMatcher.find();
         name = comment.substring(functionMatcher.start(), functionMatcher.end());
+
+        if(name.substring(0, 2).equals("__")){
+            
+        }
 
         paramDescriptions = new HashMap<>();
         paramTypes = new HashMap<>();
@@ -81,6 +99,11 @@ public class PyDocComment {
         String[] returnParts = comment.substring(returnMatcher.start(), returnMatcher.end()).split(" :- ");
         returnDesctiption = returnParts[0];
         returnType = returnParts[1];
+    }
+
+    public void bindParentClass(String parentClassName){
+        this.parentClassName = parentClassName;
+        containedInClass = true;
     }
 
     public boolean describesClass(){
@@ -111,6 +134,16 @@ public class PyDocComment {
     public String[] getParamInfo(String param){
         return new String[]{ paramDescriptions.get(param), paramTypes.get(param) };
     }
+    public String getSupportedOperators(){
+        return supportedOperators;
+    }
+
+    public boolean containedInClass(){
+        return containedInClass;
+    }
+    public String parentClassName(){
+        return parentClassName;
+    }
 
     @Override
     public String toString(){
@@ -120,6 +153,7 @@ public class PyDocComment {
         out.append(description);
 
         if (isClass){
+            out.append("\nSupported Operators:\n\t" + supportedOperators);
             return out.toString();
         }
 
