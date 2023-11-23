@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 public class PyDocComment {
     public class RegEx{
-        public static final String COMMENTSEARCH = "\"\"\"d[\\[\\]\\(\\)\\{\\},\\.\\w\\s;:\\-\\+\\*\\/]+\"\"\"\\n\\s*((class)|(def)) [\\w\\s(),]+:";
+        public static final String COMMENTSEARCH = "\"\"\"d[\\[\\]\\(\\)\\{\\},\\.\\w\\s;:\\-\\+\\*\\/]+\"\"\"\\s*((class)|(def)) [\\w\\s(),]+:";
         public static final String FUNCTIONFIND = "(?<=def )[\\w-]+(?=\\([\\s\\S]*\\):)";
         public static final String CLASSFIND = "(?<=class )[\\w-]+(?=[:(])";
         public static final String PARAMFIND = "(?<=:param )[^\\n]+";

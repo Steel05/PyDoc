@@ -32,13 +32,26 @@ public class Parser{
             new CSSRule("margin", "auto"),
             new CSSRule("background-color", "grey"));
 
+        CSSClass jClass = cssFile.createClass(".java-class").addRules(
+            new CSSRule("padding", "5", CSSUnit.px),
+            new CSSRule("padding-left", "10", CSSUnit.px));
+        CSSClass beige = cssFile.createClass(".beige-class").addRules(
+            new CSSRule("background-color", "beige"));
+        CSSClass antiqueWhite = cssFile.createClass(".white-class").addRules(
+            new CSSRule("background-color", "antiquewhite"));
+
         PyDocComment[] docs = getDocs();
         HashMap<String, Component> classMap = new HashMap<String, Component>();
 
+        boolean isBeige = true;
+
         for (PyDocComment doc : docs){
             if (doc.describesClass()){
+                isBeige = !isBeige;
+                Component docComponent = formatDocToHTML(doc);
+                docComponent.addCSSClasses(new CSSClass[] {jClass, isBeige ? beige : antiqueWhite});
                 Component list = Tags.ul().addCSSClasses(classList);
-                baseComponent.addChild(formatDocToHTML(doc).addChildren(Tags.h3("Functions"), list));
+                baseComponent.addChild(docComponent.addChildren(Tags.h3("Functions"), list));
                 classMap.put(doc.name(), list);
                 baseComponent.addChild(Tags.hr());
             }
