@@ -8,8 +8,7 @@ public class PyDocComment {
     public static final String CLASSFIND_REGEX = "(?<=class )[\\w-]+(?=[:(])";
     public static final String PARAMFIND_REGEX = "(?<=:param )[^\\n]+";
     public static final String RETURNFIND_REGEX = "(?<=:return )[^\\n]+";
-    public static final String TYPEFIND_REGEX = "(?<= :- )[^\\n]+";
-    public static final String DESCRIPTIONFIND_REGEX = "(?<=\"\"\"d\\n)[\\.\\w\\s;-]+(?=\\n\\s*:?)";
+    public static final String DESCRIPTIONFIND_REGEX = "(?<=\"\"\"d\\n)[\\{\\}\\[\\]\\(\\),\\.\\w\\s:;-]+?(?=\\n\\s*:?)";
     public static final String OPERATORFIND_REGEX = "(?<=ops :- )[^\\n]+";
 
     private final String rawComment;

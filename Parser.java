@@ -19,7 +19,7 @@ import HTML.Components.BaseComponents.UnorderedList;
 import HTML.Tags;
 
 public class Parser{
-    public static final String SEARCH_REGEX = "\"\"\"d[,\\.\\w\\s;:\\-\\+\\*\\/]+\"\"\"\\n\\s*((class)|(def)) [\\w+\\s(),]+:";
+    public static final String SEARCH_REGEX = "\"\"\"d[\\[\\],\\.\\w\\s;:\\-\\+\\*\\/]+\"\"\"\\n\\s*((class)|(def)) [\\w+\\s(),]+:";
 
     public static void main(String[] args) {
         HtmlFile file = new HtmlFile("PyDoc");
@@ -65,6 +65,8 @@ public class Parser{
     }
 
     private static Component formatDocToHTML(PyDocComment doc){
+        System.out.println(doc.name());
+
         Component master = Tags.div();
 
         master.addChildren(Tags.h3(doc.name() + " : " + (doc.describesClass() ? "Class" : "Function")), 
@@ -117,7 +119,6 @@ public class Parser{
             System.err.println("No file to open");
         }
         File file = chooser.getSelectedFile();
-        //System.out.printf("Beginning parse on %s", file.getName());
         StringBuilder contentBuilder = new StringBuilder();
         String content;
         try {
