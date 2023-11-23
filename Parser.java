@@ -19,8 +19,6 @@ import HTML.Components.BaseComponents.UnorderedList;
 import HTML.Tags;
 
 public class Parser{
-    public static final String SEARCH_REGEX = "\"\"\"d[\\[\\],\\.\\w\\s;:\\-\\+\\*\\/]+\"\"\"\\n\\s*((class)|(def)) [\\w+\\s(),]+:";
-
     public static void main(String[] args) {
         HtmlFile file = new HtmlFile("PyDoc");
         Component baseComponent = file.getBodyComponent();
@@ -61,18 +59,19 @@ public class Parser{
             
         }
 
-        file.save("index.html"); 
+        file.save("index.html");
     }
 
     private static Component formatDocToHTML(PyDocComment doc){
-        System.out.println(doc.name());
-
         Component master = Tags.div();
 
         master.addChildren(Tags.h3(doc.name() + " : " + (doc.describesClass() ? "Class" : "Function")), 
             Tags.p(doc.description()));
 
         if (doc.describesClass()){
+            if (doc.getSupportedOperators().isEmpty() || doc.getSupportedOperators().isBlank()){
+                return master;
+            }
             return master.addChild(Tags.p("Supported Operators: " + doc.getSupportedOperators()));
         }
 
@@ -86,19 +85,27 @@ public class Parser{
             }
         }
 
-        
+        String returnDescription = doc.returnDescription().isEmpty() ? "" : ("  - " + doc.returnDescription());
+
+        if (doc.name().startsWith("__") && doc.name().endsWith("__")){
+            return master;
+        }
+
+        master.addChild(Tags.p(String.format("<b>Return</b>: %s%s", doc.returnType(), returnDescription)));
+
         return master;
     }
 
     private static PyDocComment[] getDocs(){
         String currentClass = "None";
         String content = loadFile();
-        Matcher matcher = Pattern.compile(SEARCH_REGEX).matcher(content);
+        Matcher matcher = Pattern.compile(PyDocComment.RegEx.COMMENTSEARCH).matcher(content);
 
         ArrayList<PyDocComment> comments = new ArrayList<>();
         while (matcher.find()){
             PyDocComment comment = new PyDocComment(content.substring(matcher.start(), matcher.end()));
             comments.add(comment);
+            
             if (comment.describesClass()){
                 currentClass = comment.name();
             }

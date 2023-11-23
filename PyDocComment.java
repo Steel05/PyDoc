@@ -4,12 +4,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PyDocComment {
-    public static final String FUNCTIONFIND_REGEX = "(?<=def )[\\w-]+(?=\\([\\s\\S]*\\):)";
-    public static final String CLASSFIND_REGEX = "(?<=class )[\\w-]+(?=[:(])";
-    public static final String PARAMFIND_REGEX = "(?<=:param )[^\\n]+";
-    public static final String RETURNFIND_REGEX = "(?<=:return )[^\\n]+";
-    public static final String DESCRIPTIONFIND_REGEX = "(?<=\"\"\"d\\n)[\\{\\}\\[\\]\\(\\),\\.\\w\\s:;-]+?(?=\\n\\s*:?)";
-    public static final String OPERATORFIND_REGEX = "(?<=ops :- )[^\\n]+";
+    public class RegEx{
+        public static final String COMMENTSEARCH = "\"\"\"d[\\[\\]\\(\\)\\{\\},\\.\\w\\s;:\\-\\+\\*\\/]+\"\"\"\\n\\s*((class)|(def)) [\\w\\s(),]+:";
+        public static final String FUNCTIONFIND = "(?<=def )[\\w-]+(?=\\([\\s\\S]*\\):)";
+        public static final String CLASSFIND = "(?<=class )[\\w-]+(?=[:(])";
+        public static final String PARAMFIND = "(?<=:param )[^\\n]+";
+        public static final String RETURNFIND = "(?<=:return )[^\\n]+";
+        public static final String DESCRIPTIONFIND = "(?<=\"\"\"d\\n)[\\{\\}\\[\\]\\(\\),\\.\\w\\s:;-]+?(?=\\n\\s*:?)";
+        public static final String OPERATORFIND = "(?<=ops :- )[^\\n]+";
+    }
 
     private final String rawComment;
     private final String description;
@@ -28,7 +31,7 @@ public class PyDocComment {
     public PyDocComment(String comment){
         rawComment = comment;
 
-        Matcher descriptionMatcher = Pattern.compile(DESCRIPTIONFIND_REGEX).matcher(comment);
+        Matcher descriptionMatcher = Pattern.compile(RegEx.DESCRIPTIONFIND).matcher(comment);
         // Null description case [Early return]
         if (!descriptionMatcher.find()){
             description = "";
@@ -45,7 +48,7 @@ public class PyDocComment {
 
         description = comment.substring(descriptionMatcher.start(), descriptionMatcher.end());
 
-        Matcher classMatcher = Pattern.compile(CLASSFIND_REGEX).matcher(comment);
+        Matcher classMatcher = Pattern.compile(RegEx.CLASSFIND).matcher(comment);
         isClass = classMatcher.find();
         if (isClass){
             name = comment.substring(classMatcher.start(), classMatcher.end());
@@ -55,7 +58,7 @@ public class PyDocComment {
             paramDescriptions = null;
             paramTypes = null;
 
-            Matcher opMatcher = Pattern.compile(OPERATORFIND_REGEX).matcher(comment);
+            Matcher opMatcher = Pattern.compile(RegEx.OPERATORFIND).matcher(comment);
             if(!opMatcher.find()){
                 supportedOperators = "";
                 return;
@@ -66,7 +69,7 @@ public class PyDocComment {
         }
         
         supportedOperators = "";
-        Matcher functionMatcher = Pattern.compile(FUNCTIONFIND_REGEX).matcher(comment);
+        Matcher functionMatcher = Pattern.compile(RegEx.FUNCTIONFIND).matcher(comment);
         functionMatcher.find();
         name = comment.substring(functionMatcher.start(), functionMatcher.end());
 
@@ -78,7 +81,7 @@ public class PyDocComment {
         paramTypes = new HashMap<>();
         ArrayList<String> params = new ArrayList<>();
 
-        Matcher paramMatcher = Pattern.compile(PARAMFIND_REGEX).matcher(comment);
+        Matcher paramMatcher = Pattern.compile(RegEx.PARAMFIND).matcher(comment);
         while (paramMatcher.find()){
             String[] paramParts = comment.substring(paramMatcher.start(), paramMatcher.end()).split(" :- ");
             String paramName = paramParts[0];
@@ -88,7 +91,7 @@ public class PyDocComment {
         }
         parameters = params.toArray(new String[params.size()]);
 
-        Matcher returnMatcher = Pattern.compile(RETURNFIND_REGEX).matcher(comment);
+        Matcher returnMatcher = Pattern.compile(RegEx.RETURNFIND).matcher(comment);
         if (!returnMatcher.find()){
             returnType = "None";
             returnDesctiption = "";
