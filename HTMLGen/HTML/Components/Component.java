@@ -64,7 +64,7 @@ public abstract class Component implements Writable {
         if (parent == null){
             return;
         }
-        parent.removeChild(this.childId);
+        parent.removeChild(this);
         parent = null;
     }
 
@@ -96,8 +96,8 @@ public abstract class Component implements Writable {
      * @param id The id of the child to remove
      * @return The removed child component
      */
-    public final Component removeChild(int id){
-        return children.remove(id);
+    public final void removeChild(Component child){
+        children.remove(child);
     }
 
     /**
