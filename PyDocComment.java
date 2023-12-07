@@ -11,7 +11,7 @@ public class PyDocComment {
         public static final String PROPERTYFIND = "\\w+(?=\\s*=\\s*property\\([^\\n]+\\))";
         public static final String PARAMFIND = "(?<=:param )[^\\n]+";
         public static final String RETURNFIND = "(?<=:return )[^\\n]+";
-        public static final String DESCRIPTIONFIND = "(?<=\"\"\"d\\n)[\\{\\}\\[\\]\\(\\),\\.\\w\\s:;-]+?(?=\\n\\s*:?)";
+        public static final String DESCRIPTIONFIND = "(?<=\"\"\"d\\n)[\\[\\](){},\\.\\w\\s;:\\-+*\\/=']+?(?=\\n\\s*:?)";
         public static final String OPERATORFIND = "(?<=ops :- )[^\\n]+";
         public static final String PROPERTYTYPEFIND = "(?<=type )[^\\n]+";
     }

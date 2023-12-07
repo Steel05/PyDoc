@@ -88,6 +88,9 @@ public class Parser{
 
         for (Component list : classMapProperties.values()){
             if (list.getChildren().length == 0){
+                Component[] children = list.getParent().getChildren();
+                Component h = children[children.length - 2];
+                h.release();
                 list.release();
             }
         }
