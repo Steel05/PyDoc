@@ -41,7 +41,8 @@ public class Parser{
             new CSSRule("background-color", "antiquewhite"));
 
         PyDocComment[] docs = getDocs();
-        HashMap<String, Component> classMap = new HashMap<String, Component>();
+        HashMap<String, Component> classMapFunctions = new HashMap<String, Component>();
+        HashMap<String, Component> classMapProperties = new HashMap<String, Component>();
 
         boolean isBeige = true;
 
@@ -52,24 +53,43 @@ public class Parser{
                 docComponent.addCSSClasses(new CSSClass[] {jClass, isBeige ? beige : antiqueWhite});
                 Component list = Tags.ul().addCSSClasses(classList);
                 baseComponent.addChild(docComponent.addChildren(Tags.h3("Functions"), list));
-                classMap.put(doc.name(), list);
+                Component properties = Tags.ul().addCSSClasses(classList);
+                docComponent.addChildren(Tags.h3("Properties"), properties);
+                classMapFunctions.put(doc.name(), list);
+                classMapProperties.put(doc.name(), properties);
                 baseComponent.addChild(Tags.hr());
             }
             else{
                 if(doc.containedInClass()){
-                    Component list = classMap.get(doc.parentClassName());
-                    if (list.getChildren().length > 0){
-                        list.addChild(Tags.div().addCSSClasses(customDivider));
-                    }
+                    if (doc.describesFunction()){
+                        Component list = classMapFunctions.get(doc.parentClassName());
+                        if (list.getChildren().length > 0){
+                            list.addChild(Tags.div().addCSSClasses(customDivider));
+                        }
 
-                    classMap.get(doc.parentClassName()).addChild(Tags.div().addChild(formatDocToHTML(doc)));
+                        classMapFunctions.get(doc.parentClassName()).addChild(Tags.div().addChild(formatDocToHTML(doc)));
+                    }
+                    else{
+                        Component list = classMapProperties.get(doc.parentClassName());
+                        if (list.getChildren().length > 0){
+                            list.addChild(Tags.div().addCSSClasses(customDivider));
+                        }
+
+                        classMapProperties.get(doc.parentClassName()).addChild(Tags.div().addChild(formatDocToHTML(doc)));
+                    }
+                    
                 }
                 else{
                     baseComponent.addChild(formatDocToHTML(doc));
                     baseComponent.addChild(Tags.hr());
                 }
             }
-            
+        }
+
+        for (Component list : classMapProperties.values()){
+            if (list.getChildren().length == 0){
+                list.release();
+            }
         }
 
         file.save("index.html");
@@ -78,7 +98,18 @@ public class Parser{
     private static Component formatDocToHTML(PyDocComment doc){
         Component master = Tags.div();
 
-        master.addChildren(Tags.h3(doc.name() + " : " + (doc.describesClass() ? "Class" : "Function")), 
+        String type = "";
+        if(doc.describesClass()){
+            type = "Class";
+        }
+        else if(doc.describesFunction()){
+            type = "Function";
+        }
+        else if(doc.describesProperty()){
+            type = "Property";
+        }
+
+        master.addChildren(Tags.h3(doc.name() + " : " + type), 
             Tags.p(doc.description()));
 
         if (doc.describesClass()){
@@ -88,7 +119,8 @@ public class Parser{
             return master.addChild(Tags.p("Supported Operators: " + doc.getSupportedOperators()));
         }
 
-        if (doc.parameters().length != 0){
+        if (doc.describesFunction()){
+            if (doc.parameters().length != 0){
             UnorderedList list = Tags.ul();
             master.addChild(new Header(4, "Parameters").addChild(list));
         
@@ -96,16 +128,20 @@ public class Parser{
                 String[] info = doc.getParamInfo(parameter);
                 list.addChild(Tags.rawText(String.format("<i>%s</i> : %s - %s", parameter, info[1], info[0])));
             }
-        }
+            }
 
-        String returnDescription = doc.returnDescription().isEmpty() ? "" : ("  - " + doc.returnDescription());
+            String returnDescription = doc.returnDescription().isEmpty() ? "" : ("  - " + doc.returnDescription());
 
-        if (doc.name().startsWith("__") && doc.name().endsWith("__")){
+            if (doc.name().startsWith("__") && doc.name().endsWith("__")){
+                return master;
+            }
+
+            master.addChild(Tags.p(String.format("<b>Return</b>: %s%s", doc.returnType(), returnDescription)));
+
             return master;
         }
 
-        master.addChild(Tags.p(String.format("<b>Return</b>: %s%s", doc.returnType(), returnDescription)));
-
+        master.addChild(Tags.p("Type: " + doc.returnType()));
         return master;
     }
 

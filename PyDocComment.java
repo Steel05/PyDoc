@@ -5,13 +5,15 @@ import java.util.regex.Pattern;
 
 public class PyDocComment {
     public class RegEx{
-        public static final String COMMENTSEARCH = "\"\"\"d[\\[\\]\\(\\)\\{\\},\\.\\w\\s;:\\-\\+\\*\\/]+\"\"\"\\s*((class)|(def)) [\\w\\s(),]+:";
+        public static final String COMMENTSEARCH = "\"\"\"d[\\[\\](){},\\.\\w\\s;:\\-+*\\/=']+\"\"\"\\s*((class \\w+:)|(def \\w+\\([^\\n]+?\\):)|(\\w+\\s*=\\s*property\\([^\\n]+\\)))\\n";
         public static final String FUNCTIONFIND = "(?<=def )[\\w-]+(?=\\([\\s\\S]*\\):)";
         public static final String CLASSFIND = "(?<=class )[\\w-]+(?=[:(])";
+        public static final String PROPERTYFIND = "\\w+(?=\\s*=\\s*property\\([^\\n]+\\))";
         public static final String PARAMFIND = "(?<=:param )[^\\n]+";
         public static final String RETURNFIND = "(?<=:return )[^\\n]+";
         public static final String DESCRIPTIONFIND = "(?<=\"\"\"d\\n)[\\{\\}\\[\\]\\(\\),\\.\\w\\s:;-]+?(?=\\n\\s*:?)";
         public static final String OPERATORFIND = "(?<=ops :- )[^\\n]+";
+        public static final String PROPERTYTYPEFIND = "(?<=type )[^\\n]+";
     }
 
     private final String rawComment;
@@ -23,6 +25,8 @@ public class PyDocComment {
     private final String returnType;
     private final String name;
     private final boolean isClass;
+    private final boolean isFunction;
+    private final boolean isProperty;
     private final String supportedOperators;
 
     private boolean containedInClass = false;
@@ -42,6 +46,8 @@ public class PyDocComment {
             returnType = "";
             name = "";
             isClass = false;
+            isFunction = false;
+            isProperty = false;
             supportedOperators = "";
             return;
         }
@@ -51,6 +57,9 @@ public class PyDocComment {
         Matcher classMatcher = Pattern.compile(RegEx.CLASSFIND).matcher(comment);
         isClass = classMatcher.find();
         if (isClass){
+            isFunction = false;
+            isProperty = false;
+
             name = comment.substring(classMatcher.start(), classMatcher.end());
             returnDesctiption = "";
             returnType = "";
@@ -67,40 +76,69 @@ public class PyDocComment {
 
             return;
         }
-        
+        // Close off remaining class based data
         supportedOperators = "";
+
         Matcher functionMatcher = Pattern.compile(RegEx.FUNCTIONFIND).matcher(comment);
-        functionMatcher.find();
-        name = comment.substring(functionMatcher.start(), functionMatcher.end());
+        isFunction = functionMatcher.find();
+        if (isFunction){
+            isProperty = false;
+            name = comment.substring(functionMatcher.start(), functionMatcher.end());
 
-        if(name.substring(0, 2).equals("__")){
-            
-        }
+            if(name.substring(0, 2).equals("__")){
 
-        paramDescriptions = new HashMap<>();
-        paramTypes = new HashMap<>();
-        ArrayList<String> params = new ArrayList<>();
+            }
 
-        Matcher paramMatcher = Pattern.compile(RegEx.PARAMFIND).matcher(comment);
-        while (paramMatcher.find()){
-            String[] paramParts = comment.substring(paramMatcher.start(), paramMatcher.end()).split(" :- ");
-            String paramName = paramParts[0];
-            params.add(paramName);
-            paramDescriptions.put(paramName, paramParts[1]);
-            paramTypes.put(paramName, paramParts[2]);
-        }
-        parameters = params.toArray(new String[params.size()]);
+            paramDescriptions = new HashMap<>();
+            paramTypes = new HashMap<>();
+            ArrayList<String> params = new ArrayList<>();
 
-        Matcher returnMatcher = Pattern.compile(RegEx.RETURNFIND).matcher(comment);
-        if (!returnMatcher.find()){
-            returnType = "None";
-            returnDesctiption = "";
+            Matcher paramMatcher = Pattern.compile(RegEx.PARAMFIND).matcher(comment);
+            while (paramMatcher.find()){
+                String[] paramParts = comment.substring(paramMatcher.start(), paramMatcher.end()).split(" :- ");
+                String paramName = paramParts[0];
+                params.add(paramName);
+                paramDescriptions.put(paramName, paramParts[1]);
+                paramTypes.put(paramName, paramParts[2]);
+            }
+            parameters = params.toArray(new String[params.size()]);
+
+            Matcher returnMatcher = Pattern.compile(RegEx.RETURNFIND).matcher(comment);
+            if (!returnMatcher.find()){
+                returnType = "None";
+                returnDesctiption = "";
+                return;
+            }
+
+            String[] returnParts = comment.substring(returnMatcher.start(), returnMatcher.end()).split(" :- ");
+            returnDesctiption = returnParts[0];
+            returnType = returnParts[1];
             return;
         }
+        returnDesctiption = "";
+        paramDescriptions = null;
+        paramTypes = null;
+        parameters = null;
 
-        String[] returnParts = comment.substring(returnMatcher.start(), returnMatcher.end()).split(" :- ");
-        returnDesctiption = returnParts[0];
-        returnType = returnParts[1];
+        isProperty = true;
+        Matcher propertyMatcher = Pattern.compile(RegEx.PROPERTYFIND).matcher(comment);
+        propertyMatcher.find();
+        name = comment.substring(propertyMatcher.start(), propertyMatcher.end());
+
+        String t;
+        try{
+            Matcher typeMatcher = Pattern.compile(RegEx.PROPERTYTYPEFIND).matcher(comment);
+            typeMatcher.find();
+            t = comment.substring(typeMatcher.start(), typeMatcher.end());
+        }
+        catch(Exception e){
+            e.printStackTrace();
+            System.err.println("Error occurred on property " + name);
+            t = "";
+            System.exit(1);
+        }
+        returnType = t;
+        
     }
 
     public void bindParentClass(String parentClassName){
@@ -112,7 +150,10 @@ public class PyDocComment {
         return isClass;
     }
     public boolean describesFunction(){
-        return !isClass;
+        return isFunction;
+    }
+    public boolean describesProperty(){
+        return isProperty;
     }
 
     public String getRawComment(){
