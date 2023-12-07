@@ -13,7 +13,7 @@ public abstract class Component implements Writable {
     private ArrayList<Component> children = new ArrayList<>();
 
     private final String tag;
-    private int childId;
+    protected int childId;
     private HashMap<String, CSSClass> cssClasses = new HashMap<>();
 
     protected Component(String tag){
@@ -181,5 +181,15 @@ public abstract class Component implements Writable {
     @Override
     public String toString(){
         return String.format("<%s> Component", tag);
+    }
+
+    @Override
+    public boolean equals(Object o){
+        if (o instanceof Component){
+            Component other = (Component)o;
+            
+            return (this.childId == other.childId) && (tag.equals(other.getTag())) && (parent.childId == other.getParent().childId);
+        }
+        return false;
     }
 }
